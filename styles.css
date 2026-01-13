@@ -51,12 +51,25 @@ body {
     align-items: center;
 }
 
+.nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.nav-brand .logo {
+    height: 40px;
+    width: auto;
+    object-fit: contain;
+}
+
 .nav-brand h1 {
     font-size: 1.5rem;
     background: var(--gradient);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    margin: 0;
 }
 
 .nav-menu {
@@ -410,6 +423,13 @@ body {
     margin-bottom: 2rem;
 }
 
+.footer-logo {
+    height: 50px;
+    width: auto;
+    object-fit: contain;
+    margin-bottom: 1rem;
+}
+
 .footer-section h3 {
     background: var(--gradient);
     -webkit-background-clip: text;
@@ -505,6 +525,10 @@ body {
     .nav-toggle {
         display: none;
     }
+
+    .nav-brand .logo {
+        height: 45px;
+    }
 }
 
 @media (max-width: 767px) {
@@ -557,5 +581,17 @@ body {
     .btn {
         padding: 0.75rem 1.5rem;
         font-size: 0.875rem;
+    }
+
+    .nav-brand .logo {
+        height: 32px;
+    }
+
+    .nav-brand h1 {
+        font-size: 1.25rem;
+    }
+
+    .footer-logo {
+        height: 40px;
     }
 }
