@@ -1,130 +1,114 @@
-// Mobile Navigation Toggle
-const navToggle = document.querySelector('.nav-toggle');
-const navMenu = document.querySelector('.nav-menu');
+(function () {
+    'use strict';
 
-navToggle.addEventListener('click', () => {
-    navMenu.classList.toggle('active');
-    navToggle.classList.toggle('active');
-});
+    var navbar = document.getElementById('navbar');
+    var navToggle = document.getElementById('nav-toggle');
+    var navMenu = document.getElementById('nav-menu');
+    var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-// Close mobile menu when clicking on a link
-document.querySelectorAll('.nav-menu a').forEach(link => {
-    link.addEventListener('click', () => {
-        navMenu.classList.remove('active');
-        navToggle.classList.remove('active');
-    });
-});
+    /* ---------------------------------------------------------------
+       Navbar: solid background once the page is scrolled
+       --------------------------------------------------------------- */
+    function updateNavbar() {
+        if (!navbar) return;
+        navbar.classList.toggle('scrolled', window.scrollY > 8);
+    }
+    updateNavbar();
+    window.addEventListener('scroll', updateNavbar, { passive: true });
 
-// Smooth scrolling for anchor links
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function (e) {
-        e.preventDefault();
-        const target = document.querySelector(this.getAttribute('href'));
-        if (target) {
-            const offsetTop = target.offsetTop - 70; // Account for fixed navbar
-            window.scrollTo({
-                top: offsetTop,
-                behavior: 'smooth'
-            });
-        }
-    });
-});
+    /* ---------------------------------------------------------------
+       Mobile navigation drawer
+       --------------------------------------------------------------- */
+    function closeMenu() {
+        if (!navMenu || !navToggle) return;
+        navMenu.classList.remove('open');
+        navToggle.setAttribute('aria-expanded', 'false');
+    }
 
-// Intersection Observer for fade-in animations
-const observerOptions = {
-    threshold: 0.1,
-    rootMargin: '0px 0px -50px 0px'
-};
-
-const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            entry.target.style.opacity = '1';
-            entry.target.style.transform = 'translateY(0)';
-        }
-    });
-}, observerOptions);
-
-// Observe elements for animation
-document.addEventListener('DOMContentLoaded', () => {
-    const animatedElements = document.querySelectorAll('.trend-card, .video-card, .about-content');
-    animatedElements.forEach(el => {
-        el.style.opacity = '0';
-        el.style.transform = 'translateY(30px)';
-        el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-        observer.observe(el);
-    });
-
-    // Autoplay trend videos when they come into view
-    const trendVideos = document.querySelectorAll('.trend-image video');
-    const videoObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.play().catch(e => {
-                    // Autoplay may be blocked by browser, ignore error
-                });
-            } else {
-                entry.target.pause();
-            }
+    if (navToggle && navMenu) {
+        navToggle.addEventListener('click', function () {
+            var isOpen = navMenu.classList.toggle('open');
+            navToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
         });
-    }, { threshold: 0.5 });
 
-    trendVideos.forEach(video => {
-        videoObserver.observe(video);
-    });
-});
-
-// Video play/pause on hover (optional enhancement)
-const videoCards = document.querySelectorAll('.video-card');
-videoCards.forEach(card => {
-    const video = card.querySelector('video');
-    if (video) {
-        card.addEventListener('mouseenter', () => {
-            // Optional: play video on hover
-            // video.play();
+        navMenu.querySelectorAll('a').forEach(function (link) {
+            link.addEventListener('click', closeMenu);
         });
-        card.addEventListener('mouseleave', () => {
-            // Optional: pause video on leave
-            // video.pause();
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeMenu();
+        });
+
+        window.matchMedia('(min-width: 900px)').addEventListener('change', function (e) {
+            if (e.matches) closeMenu();
         });
     }
-});
 
-// Add active state to navigation based on scroll position
-window.addEventListener('scroll', () => {
-    const sections = document.querySelectorAll('section[id]');
-    const scrollY = window.pageYOffset;
+    /* ---------------------------------------------------------------
+       Highlight the nav link for the section currently in view
+       --------------------------------------------------------------- */
+    var navLinks = Array.prototype.slice.call(document.querySelectorAll('.nav-menu a[href^="#"]'));
+    var sections = navLinks
+        .map(function (link) { return document.querySelector(link.getAttribute('href')); })
+        .filter(Boolean);
 
-    sections.forEach(section => {
-        const sectionHeight = section.offsetHeight;
-        const sectionTop = section.offsetTop - 100;
-        const sectionId = section.getAttribute('id');
-        const navLink = document.querySelector(`.nav-menu a[href="#${sectionId}"]`);
-
-        if (scrollY > sectionTop && scrollY <= sectionTop + sectionHeight) {
-            document.querySelectorAll('.nav-menu a').forEach(link => {
-                link.style.color = '';
+    if (sections.length && 'IntersectionObserver' in window) {
+        var current = null;
+        var sectionObserver = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (entry.isIntersecting) current = entry.target.id;
             });
-            if (navLink) {
-                navLink.style.color = 'var(--pink-accent)';
-            }
-        }
-    });
-});
+            navLinks.forEach(function (link) {
+                link.classList.toggle('active', link.getAttribute('href') === '#' + current);
+            });
+        }, { rootMargin: '-40% 0px -55% 0px', threshold: 0 });
 
-// Button click handlers (placeholder for future functionality)
-document.querySelectorAll('.btn-primary').forEach(btn => {
-    btn.addEventListener('click', () => {
-        console.log('Upload video clicked');
-        // Add upload functionality here
-    });
-});
+        sections.forEach(function (section) { sectionObserver.observe(section); });
+    }
 
-document.querySelectorAll('.btn-secondary').forEach(btn => {
-    btn.addEventListener('click', () => {
-        const trendsSection = document.querySelector('#trends');
-        if (trendsSection) {
-            trendsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    /* ---------------------------------------------------------------
+       Reveal-on-scroll animations
+       --------------------------------------------------------------- */
+    var revealEls = document.querySelectorAll('.reveal');
+    if (reducedMotion || !('IntersectionObserver' in window)) {
+        revealEls.forEach(function (el) { el.classList.add('in'); });
+    } else {
+        var revealObserver = new IntersectionObserver(function (entries, observer) {
+            entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('in');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+        revealEls.forEach(function (el) { revealObserver.observe(el); });
+    }
+
+    /* ---------------------------------------------------------------
+       Play muted preview videos only while they are on screen
+       --------------------------------------------------------------- */
+    var videos = document.querySelectorAll('video[data-autoplay]');
+    if (videos.length) {
+        var playSafely = function (video) {
+            var p = video.play();
+            if (p && typeof p.catch === 'function') p.catch(function () {});
+        };
+
+        if ('IntersectionObserver' in window) {
+            var videoObserver = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    if (entry.isIntersecting) {
+                        playSafely(entry.target);
+                    } else {
+                        entry.target.pause();
+                    }
+                });
+            }, { threshold: 0.35 });
+
+            videos.forEach(function (video) { videoObserver.observe(video); });
+        } else {
+            videos.forEach(playSafely);
         }
-    });
-});
+    }
+})();
